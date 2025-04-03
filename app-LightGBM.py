@@ -3,6 +3,7 @@ import pandas as pd
 # import numpy as np
 import joblib
 import shap
+import plotly.graph_objects as go
 import lightgbm as lgb
 
 # 初始化 session_state 中的 data
@@ -12,7 +13,7 @@ if 'data' not in st.session_state:
         columns=['Age', 'NIHSS', 'Neu-Z', 'Lym-X', 'Lym-Z', 'Mon-Y', 'Mon-Z', 'ALT', 'SUA', 'PHR', 'UHR', 'TyG-BMI','Prediction', 'Label'])
 
 # 在主页面上显示数据
-st.header('急性缺血性脑卒中预后量子融合模型--LightGBM')
+st.header('Automatic prediction system of AIS prognosis--LightGBM')
 
 # st.markdown("### 本地图片示例")
 # 创建两列布局
@@ -28,9 +29,10 @@ right_column.image('./logo.png', caption='', width=100)
 #    local_image = f.read()
 #    st.image(local_image, caption='', width=100)
 
+result_prob_pos=0
 
 # 创建一个侧边栏
-st.sidebar.header('输入参数')
+st.sidebar.header('Input parameter')
 
 # Input bar 1
 a = st.sidebar.number_input('Age', min_value=0, max_value=150, value=47)
@@ -137,6 +139,7 @@ if uploaded_file is not None:
             X = pd.DataFrame([row],
                              columns=['Age', 'NIHSS', 'Neu-Z', 'Lym-X', 'Lym-Z', 'Mon-Y', 'Mon-Z', 'ALT', 'SUA', 'PHR', 'UHR', 'TyG-BMI'])
 
+
             # 进行预测
             result = mm.predict(X)[0]
             result_prob = mm.predict_proba(X)[0][1]
@@ -152,6 +155,21 @@ if uploaded_file is not None:
 
 # 显示更新后的 data
 st.write(st.session_state['data'])
+
+fig = go.Figure(go.Indicator(
+    mode = "gauge+number",
+    value = result_prob_pos,
+    domain = {'x': [0, 1], 'y': [0, 1]},
+    title = {'text': str(result_prob_pos)+"%", 'font': {'size': 48,'color': 'black'},},
+    gauge = {'axis': {'range': [None, 100.0]},
+             'steps' : [
+                 {'range': [0, 33.7], 'color': "#d65844"},
+                 {'range': [33.7, 100], 'color': "#5eca7a"}],
+            'bar': {'color': "#5795d6"},
+            'threshold' : {'line': {'color': "black", 'width': 4}, 'thickness': 0.75, 'value': 33.7}}))
+#fig.show()
+
+st.plotly_chart(fig)
 
 # Footer
 st.write(
