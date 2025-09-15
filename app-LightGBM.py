@@ -10,7 +10,7 @@ import lightgbm as lgb
 # 创建一个空的DataFrame来存储预测数据
 if 'data' not in st.session_state:
     st.session_state['data'] = pd.DataFrame(
-        columns=['Age', 'NIHSS', 'Neu-Z', 'Lym-X', 'Lym-Z', 'Mon-Y', 'Mon-Z', 'ALT', 'SUA', 'PHR', 'UHR', 'TyG-BMI','Prediction', 'Label'])
+        columns=['Age', 'Height', 'Neu-Z','Lym-Z','SUA', 'NIHSS','Prediction', 'Label'])
 
 # 在主页面上显示数据
 st.header('Automatic prediction system of AIS prognosis--LightGBM')
@@ -36,17 +36,11 @@ st.sidebar.header('Input parameter')
 
 # Input bar 1
 a = st.sidebar.number_input('Age', min_value=0, max_value=150, value=47)
-b = st.sidebar.number_input('NIHSS', min_value=0.0, max_value=2000.0, value=0.0)
+b = st.sidebar.number_input('Height', min_value=0, max_value=300, value=180)
 c = st.sidebar.number_input('Neu-Z', min_value=0.0, max_value=2000.0, value=1783.9)
-d = st.sidebar.number_input('Lym-X', min_value=0.0, max_value=2000.0, value=91.2)
-e = st.sidebar.number_input('Lym-Z', min_value=0.0, max_value=2000.0, value=940.5)
-f = st.sidebar.number_input('Mon-Y', min_value=0.0, max_value=2000.0, value=890.9)
-g = st.sidebar.number_input('Mon-Z', min_value=0.0, max_value=2000.0, value=1252.0)
-h = st.sidebar.number_input('ALT', min_value=0.0, max_value=2000.0, value=13.0)
-i = st.sidebar.number_input('SUA', min_value=0.0, max_value=2000.0, value=343.0)
-j = st.sidebar.number_input('PHR', min_value=0.00, max_value=2000.00, value=219.35)
-k = st.sidebar.number_input('UHR', min_value=0.00, max_value=2000.00, value=368.82)
-l = st.sidebar.number_input('TyG-BMI', min_value=0.00, max_value=2000.00, value=110.56)
+d = st.sidebar.number_input('Lym-Z', min_value=0.0, max_value=2000.0, value=940.5)
+e = st.sidebar.number_input('SUA', min_value=0.0, max_value=2000.0, value=343.0)
+f = st.sidebar.number_input('NIHSS', min_value=0.0, max_value=2000.0, value=0.0)
 
 # Unpickle classifier
 mm = joblib.load('./LightGBM.pkl')
@@ -54,8 +48,8 @@ mm = joblib.load('./LightGBM.pkl')
 # If button is pressed
 if st.sidebar.button("Submit"):
     # Store inputs into dataframe
-    X = pd.DataFrame([[a, b, c, d, e, f, g, h, i, j,k,l]],
-                     columns=['Age', 'NIHSS', 'Neu-Z', 'Lym-X', 'Lym-Z', 'Mon-Y', 'Mon-Z', 'ALT', 'SUA', 'PHR', 'UHR', 'TyG-BMI'])
+    X = pd.DataFrame([[a, b, c, d, e, f]],
+                     columns=['Age', 'Height', 'Neu-Z',  'Lym-Z', 'SUA', 'NIHSS'])
     # X = X.replace(["Brown", "Blue"], [1, 0])
 
     # Get prediction
@@ -90,7 +84,7 @@ if st.sidebar.button("Submit"):
     # st.text({str(shap_values[0])})
 
     # 创建一个新的DataFrame来存储用户输入的数据
-    new_data = pd.DataFrame([[a, b, c, d, e, f, g, h, i, j,k,l, result_prob_pos / 100, None]],
+    new_data = pd.DataFrame([[a, b, c, d, e, f, result_prob_pos / 100, None]],
                             columns=st.session_state['data'].columns)
 
     # 将预测结果添加到新数据中
@@ -106,17 +100,11 @@ if uploaded_file is not None:
     # 列名映射字典,左为Excel字段，右为模型参数名
     column_mapping = {
         'Age': 'Age',
-        'NIHSS': 'NIHSS',
+        'Height': 'Height',
         'Neu-Z': 'Neu-Z',
-        'Lym-X': 'Lym-X',
         'Lym-Z': 'Lym-Z',
-        'Mon-Y': 'Mon-Y',
-        'Mon-Z': 'Mon-Z',
-        'ALT': 'ALT',
         'SUA': 'SUA',
-        'PHR': 'PHR',
-        'UHR': 'UHR',
-        'TyG-BMI': 'TyG-BMI'
+        'NIHSS': 'NIHSS'
 
     }
 
@@ -127,7 +115,7 @@ if uploaded_file is not None:
     df = df.rename(columns=column_mapping)
 
     # 检查是否所有必需的列都存在
-    missing_cols = [col for col in ['Age', 'NIHSS', 'Neu-Z', 'Lym-X', 'Lym-Z', 'Mon-Y', 'Mon-Z', 'ALT', 'SUA', 'PHR', 'UHR', 'TyG-BMI'] if
+    missing_cols = [col for col in ['Age', 'Height', 'Neu-Z', 'Lym-Z', 'SUA', 'NIHSS'] if
                     col not in df.columns]
 
     if missing_cols:
@@ -137,7 +125,7 @@ if uploaded_file is not None:
         for _, row in df.iterrows():
             # 提取每一行数据并转换为模型输入格式
             X = pd.DataFrame([row],
-                             columns=['Age', 'NIHSS', 'Neu-Z', 'Lym-X', 'Lym-Z', 'Mon-Y', 'Mon-Z', 'ALT', 'SUA', 'PHR', 'UHR', 'TyG-BMI'])
+                             columns=['Age', 'Height', 'Neu-Z', 'Lym-Z', 'SUA', 'NIHSS'])
 
 
             # 进行预测
@@ -148,8 +136,7 @@ if uploaded_file is not None:
             label = row[label_column] if label_column in row else None
 
             # 将结果添加到 session_state 的 data 中
-            new_data = pd.DataFrame([[row["Age"], row["NIHSS"], row["Neu-Z"], row["Lym-X"], row["Lym-Z"], row["Mon-Y"],
-                                      row["Mon-Z"], row["ALT"], row["SUA"], row["PHR"], row["UHR"], row["TyG-BMI"], result_prob, label]],
+            new_data = pd.DataFrame([[row["Age"], row["Height"], row["Neu-Z"], row["Lym-Z"], row["SUA"],row["NIHSS"], result_prob, label]],
                                     columns=st.session_state['data'].columns)
             st.session_state['data'] = pd.concat([st.session_state['data'], new_data], ignore_index=True)
 
